@@ -1,0 +1,154 @@
+{#der/ This macro is called on the user dashboards. In this case the administrator dashboard
+   at the route admin.index
+#}
+{% import 'macros/icons.html' as icons %}
+{% macro render_menu_items(endpoints) %}
+  {% for endpoint, name, icon in endpoints %}
+    <div class="{% if request.endpoint == endpoint %}active{% endif %} Header-item">
+      <a href="{{ url_for(endpoint) }}" class="Header-link">{{ name | safe }}</a>
+    </div>
+  {% endfor %}
+{% endmacro %}
+
+{% macro render_right_menu_items(endpoints) %}
+  {% for endpoint, name, icon in endpoints %}
+  <div class="Header-item">
+    <a href="{{ url_for(endpoint, tab=name|lower) }}"
+      class="Header-link tooltipped tooltipped-s"
+      aria-label="{{ name|title }}">
+      {{ icon|safe }}
+    </a>
+  </div>
+  {% endfor %}
+{% endmacro %}
+
+
+{% macro render_account_items(endpoints) %}
+  {% for endpoint, name, icon in endpoints %}
+  <a class="BtnGroup-item btn btn-sm btn-outline" href="{{ url_for(endpoint) }}">{{ name }}</a>
+  {% endfor %}
+  {% endmacro %}
+  {# This is called for all users (including anonymous users). It renders the basic left side of the
+  navigation bar. In the default case, the left hand side will read 'Flask-Base'. In the logged in
+  admin case, there will also be an item that links to admin/ route. I have added an example use of
+  render_menu_items.
+  #}
+
+  {% macro header_items(current_user) %}
+  {% set home = [] %}
+  {% if current_user.is_authenticated %}
+  {% set home = [('main.index', config.APP_NAME, '')] %}
+  {% else %}
+  {% set home = [('main.index', config.APP_NAME, '')] %}
+  {% endif %}
+
+  {% set user = [] %}
+  {% set endpoints = [] %}
+
+  {% if current_user.is_authenticated == False %}
+  {% set endpoints = [
+  ('main.about', 'About', 'mdi-information-variant'),
+  ]%}
+  {# set user = ([(current_user.role.index + '.index', current_user.role.name + ' Dashboard', 'mdi-cog')]) #}
+  {% endif %}
+
+  {{ render_menu_items( home + endpoints +  user ) }}
+  {% endmacro %}
+
+  {# This renders the right hand side of the navigation bar. If the user is logged in, it links to
+  manage their account and logout (account routes). Otherwise, it links to register and login.
+  #}
+  {% macro account_items(current_user) %}
+  {% if current_user.is_authenticated %}
+  {% set endpoints = [
+  ('account.manage', 'Your Account', 'mdi-account-cog'),
+  ('account.logout', 'Log out', 'mdi-lock')
+  ] %}
+
+
+    {# render_account_items(endpoints) #}
+
+
+    <div class="Header-item Header-item--full"></div>
+
+
+  {% else %}
+    {% set endpoints = [
+    ('account.register', 'Register', 'mdi-account-plus'),
+    ('account.login', 'Log In', 'mdi-login')
+    ] %}
+    <div class="Header-item Header-item--full"></div>
+    <div class="Header-item">
+      <a class="Header-link" href="{{ url_for('account.login') }}">Login</a>
+    </div>
+    <div class="Header-item">
+      <a class="btn" href="{{ url_for('account.register') }}">
+        Register
+      </a>
+    </div>
+    {# render_menu_items(endpoints) #}
+
+  {% endif %}
+{% endmacro %}
+
+{% macro mobile_nav(current_user, dropdown=None) %}
+
+  <!-- div class="mobile only row">
+    <div class="ui fixed inverted black main menu">
+      {{ header_items(current_user) }}
+      <div class="right menu">
+        <a class="icon item" id="open-nav"><i class="sidebar icon"></i></a>
+      </div>
+    </div>
+
+    {# The menu items which will be shown when open-nav is clicked #}
+    <div class="ui fixed vertical fluid menu">
+      {{ account_items(current_user) }}
+      {{ create_dropdown(dropdown) }}
+    </div>
+  </div-->
+{% endmacro %}
+
+{% macro create_dropdown(dropdown) %}
+  {% for item in dropdown %}
+  {% if item | length == 3 %}
+    {{ render_menu_items([item]) }}
+  {% elif item | length == 2 %}
+    <div class="ui dropdown item" onClick="changeMenu(this)">{{ item[0] }} <i class="dropdown icon"></i>
+    <div class="inverted black menu">
+      {{ create_dropdown(item[1]) }}
+    </div>
+    </div>
+  {% endif %}
+  {% endfor %}
+{% endmacro %}
+
+{% macro desktop_nav(current_user, dropdown=None) %}
+<div style="background: var(--color-header-bg)">
+  <div class="Header">
+    <!--v-toolbar-title>{{ config.APP_NAME }}</v-toolbar-title-->
+
+    {{ header_items(current_user) }}
+
+    <div class="Header-item">
+      <input type="search"
+             id="header-search-input"
+             class="Header-input"
+             style="padding: 2px 10px;
+                    color: #fff;
+                    border: 1px solid #666;
+                    border-radius: 4px;
+                    width: 255px;"
+             placeholder="Search..." />
+    </div>
+    {{ account_items(current_user) }}
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_nav(current_user, dropdown=[]) %}
+  <nav class="{% if endpoints %}has-submenu{% endif %}" style="z-index:6; width:100%; position: relative; left: 0;">
+    {{ mobile_nav(current_user, dropdown=dropdown) }}
+    {{ desktop_nav(current_user, dropdown=dropdown) }}
+  </nav>
+{% endmacro %}

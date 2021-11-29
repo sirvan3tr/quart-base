@@ -1,0 +1,12 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/form_macros.html' as f %}
+{% import 'macros/check_password.html' as check %}
+
+{% block content %}
+
+    {% include 'account/register_component.html' %}
+
+{% endblock %}
+{% for field in form | selectattr('type', 'equalto', 'SubmitField') %}
+{{ f.render_form_field(field) }}
+{% endfor %}

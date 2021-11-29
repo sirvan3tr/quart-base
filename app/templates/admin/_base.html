@@ -1,0 +1,10 @@
+{% set vue = true %}
+{% set to_render_nav = None %}
+{% extends 'layouts/base.html' %}
+{% block content %}
+{% include 'admin/_nav.html' %}
+<v-main class="ma-4">
+  {% block admin %}
+  {% endblock %}
+</v-main>
+{% endblock %}

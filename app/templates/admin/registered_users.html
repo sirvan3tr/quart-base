@@ -1,0 +1,74 @@
+{% extends 'admin/_base.html' %}
+
+{% block admin %}
+
+<a href="{{ url_for('admin.index') }}">Back to dashboard</a>
+<h2>Registered Users | {{users|length}}</h2>
+<p>View and manage currently registered users.</p>
+
+{# Use overflow-x: scroll so that mobile views don't freak out
+  # when the table is too wide #}
+<div id="users-table" style="overflow-x: scroll;">
+  <users-table></users-table>
+</div>
+
+<script type="text/javascript">
+  Vue.component('users-table', {
+    name: 'users-table',
+    template: `
+          <template>
+            <v-card>
+              <v-card-title>
+                Registered Users
+                <v-spacer></v-spacer>
+                <v-text-field
+                  v-model="search"
+                  append-icon="mdi-magnify"
+                  label="Search"
+                  single-line
+                  hide-details
+                ></v-text-field>
+              </v-card-title>
+              <v-data-table
+              dense
+              :headers="headers"
+              :items="users"
+              :search="search"
+              @click:row="handleClick"
+            ></v-data-table>
+            </v-card>
+          </template>
+          `,
+    methods: {
+      handleClick: function(value) {
+        window.location.href = value.url;
+      }
+    },
+    data: function(){
+      return {
+          search: '',
+          users: [
+              {% for u in users | sort(attribute='last_name') %}
+              {
+                firstName: '{{ u.first_name }}',
+                lastName: '{{ u.last_name }}',
+                email: '{{ u.email }}',
+                role: '{{ u.role.name }}',
+                id: '{{ u.id }}',
+                url: '{{ url_for('admin.user_info', user_id=u.id) }}',
+								createdDate: '{{u.date_created}}'
+              },
+              {% endfor %}
+            ],
+          headers: [
+              {text: 'First name', value: 'firstName'},
+              {text: 'Last name', value: 'lastName'},
+              {text: 'Email address', value: 'email'},
+              {text: 'Account type', value: 'role'},
+							{text: 'Date Created', value: 'createdDate'}
+            ]
+        }
+    }            
+  })
+</script>
+{% endblock %}

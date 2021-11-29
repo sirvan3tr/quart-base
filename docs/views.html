@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>views.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div class='section'>
+    <div class='docs'><h1>views.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Blueprint</span><span class="p">,</span>
+    <span class="n">abort</span><span class="p">,</span>
+    <span class="n">flash</span><span class="p">,</span>
+    <span class="n">redirect</span><span class="p">,</span>
+    <span class="n">render_template</span><span class="p">,</span>
+    <span class="n">request</span><span class="p">,</span>
+    <span class="n">url_for</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">flask_login</span> <span class="kn">import</span> <span class="n">current_user</span><span class="p">,</span> <span class="n">login_required</span>
+<span class="kn">from</span> <span class="nn">flask_rq</span> <span class="kn">import</span> <span class="n">get_queue</span>
+
+<span class="kn">from</span> <span class="nn">app</span> <span class="kn">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">app.controllers.admin.forms</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ChangeAccountTypeForm</span><span class="p">,</span>
+    <span class="n">ChangeUserEmailForm</span><span class="p">,</span>
+    <span class="n">InviteUserForm</span><span class="p">,</span>
+    <span class="n">NewUserForm</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">app.decorators</span> <span class="kn">import</span> <span class="n">admin_required</span>
+<span class="kn">from</span> <span class="nn">app.email</span> <span class="kn">import</span> <span class="n">send_email</span>
+<span class="kn">from</span> <span class="nn">app.models</span> <span class="kn">import</span> <span class="n">EditableHTML</span><span class="p">,</span> <span class="n">Role</span><span class="p">,</span> <span class="n">User</span>
+
+<span class="n">admin</span> <span class="o">=</span> <span class="n">Blueprint</span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span> <span class="vm">__name__</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <p>Admin dashboard page.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">index</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;admin/index.html&#39;</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <p>Create a new user.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/new-user&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">new_user</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">form</span> <span class="o">=</span> <span class="n">NewUserForm</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">validate_on_submit</span><span class="p">():</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">first_name</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">first_name</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">last_name</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">last_name</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">email</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">password</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">flash</span><span class="p">(</span><span class="s1">&#39;User </span><span class="si">{}</span><span class="s1"> successfully created&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">full_name</span><span class="p">()),</span>
+              <span class="s1">&#39;form-success&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;admin/new_user.html&#39;</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="n">form</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <p>Invites a new user to create an account and set their own password.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/invite-user&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">invite_user</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">form</span> <span class="o">=</span> <span class="n">InviteUserForm</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">validate_on_submit</span><span class="p">():</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">first_name</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">first_name</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">last_name</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">last_name</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">email</span><span class="o">=</span><span class="n">form</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">generate_confirmation_token</span><span class="p">()</span>
+        <span class="n">invite_link</span> <span class="o">=</span> <span class="n">url_for</span><span class="p">(</span>
+            <span class="s1">&#39;account.join_from_invite&#39;</span><span class="p">,</span>
+            <span class="n">user_id</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span>
+            <span class="n">_external</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">get_queue</span><span class="p">()</span><span class="o">.</span><span class="n">enqueue</span><span class="p">(</span>
+            <span class="n">send_email</span><span class="p">,</span>
+            <span class="n">recipient</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span>
+            <span class="n">subject</span><span class="o">=</span><span class="s1">&#39;You Are Invited To Join&#39;</span><span class="p">,</span>
+            <span class="n">template</span><span class="o">=</span><span class="s1">&#39;account/email/invite&#39;</span><span class="p">,</span>
+            <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+            <span class="n">invite_link</span><span class="o">=</span><span class="n">invite_link</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">flash</span><span class="p">(</span><span class="s1">&#39;User </span><span class="si">{}</span><span class="s1"> successfully invited&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">full_name</span><span class="p">()),</span>
+              <span class="s1">&#39;form-success&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;admin/new_user.html&#39;</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="n">form</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <p>View all registered users.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/users&#39;</span><span class="p">)</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">registered_users</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">users</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">roles</span> <span class="o">=</span> <span class="n">Role</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span>
+        <span class="s1">&#39;admin/registered_users.html&#39;</span><span class="p">,</span> <span class="n">users</span><span class="o">=</span><span class="n">users</span><span class="p">,</span> <span class="n">roles</span><span class="o">=</span><span class="n">roles</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <p>View a user&rsquo;s profile.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/user/&lt;int:user_id&gt;&#39;</span><span class="p">)</span>
+<span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/user/&lt;int:user_id&gt;/info&#39;</span><span class="p">)</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">user_info</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;admin/manage_user.html&#39;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <p>Change a user&rsquo;s email.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/user/&lt;int:user_id&gt;/change-email&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">change_user_email</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-12'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-12'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">ChangeUserEmailForm</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">validate_on_submit</span><span class="p">():</span>
+        <span class="n">user</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">flash</span><span class="p">(</span><span class="s1">&#39;Email for user </span><span class="si">{}</span><span class="s1"> successfully changed to </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">full_name</span><span class="p">(),</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">),</span> <span class="s1">&#39;form-success&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;admin/manage_user.html&#39;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="n">form</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-13'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-13'>#</a>
+      </div>
+      <p>Change a user&rsquo;s account type.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span>
+    <span class="s1">&#39;/user/&lt;int:user_id&gt;/change-account-type&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">change_account_type</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-14'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-14'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">current_user</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">:</span>
+        <span class="n">flash</span><span class="p">(</span><span class="s1">&#39;You cannot change the type of your own account. Please ask &#39;</span>
+              <span class="s1">&#39;another administrator to do this.&#39;</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;admin.user_info&#39;</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">))</span>
+
+    <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">ChangeAccountTypeForm</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">form</span><span class="o">.</span><span class="n">validate_on_submit</span><span class="p">():</span>
+        <span class="n">user</span><span class="o">.</span><span class="n">role</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">flash</span><span class="p">(</span><span class="s1">&#39;Role for user </span><span class="si">{}</span><span class="s1"> successfully changed to </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">user</span><span class="o">.</span><span class="n">full_name</span><span class="p">(),</span> <span class="n">user</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="s1">&#39;form-success&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;admin/manage_user.html&#39;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">form</span><span class="o">=</span><span class="n">form</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-15'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>Request deletion of a user&rsquo;s account.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/user/&lt;int:user_id&gt;/delete&#39;</span><span class="p">)</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">delete_user_request</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">abort</span><span class="p">(</span><span class="mi">404</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;admin/manage_user.html&#39;</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">)</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
+      <p>Delete a user&rsquo;s account.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/user/&lt;int:user_id&gt;/_delete&#39;</span><span class="p">)</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">delete_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-18'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-18'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="k">if</span> <span class="n">current_user</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">:</span>
+        <span class="n">flash</span><span class="p">(</span><span class="s1">&#39;You cannot delete your own account. Please ask another &#39;</span>
+              <span class="s1">&#39;administrator to do this.&#39;</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="n">flash</span><span class="p">(</span><span class="s1">&#39;Successfully deleted user </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="n">user</span><span class="o">.</span><span class="n">full_name</span><span class="p">(),</span> <span class="s1">&#39;success&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;admin.registered_users&#39;</span><span class="p">))</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-19'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-19'>#</a>
+      </div>
+      <p>Update the contents of an editor.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">&#39;/_update_editor_contents&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@login_required</span>
+<span class="nd">@admin_required</span>
+<span class="k">def</span> <span class="nf">update_editor_contents</span><span class="p">():</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-20'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-20'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">edit_data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;edit_data&#39;</span><span class="p">)</span>
+    <span class="n">editor_name</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;editor_name&#39;</span><span class="p">)</span>
+
+    <span class="n">editor_contents</span> <span class="o">=</span> <span class="n">EditableHTML</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span>
+        <span class="n">editor_name</span><span class="o">=</span><span class="n">editor_name</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">editor_contents</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">editor_contents</span> <span class="o">=</span> <span class="n">EditableHTML</span><span class="p">(</span><span class="n">editor_name</span><span class="o">=</span><span class="n">editor_name</span><span class="p">)</span>
+    <span class="n">editor_contents</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">edit_data</span>
+
+    <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">editor_contents</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="s1">&#39;OK&#39;</span><span class="p">,</span> <span class="mi">200</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

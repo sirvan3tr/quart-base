@@ -1,0 +1,111 @@
+{% import 'macros/nav_macros.html' as nav %}
+{% import 'macros/icons.html' as icons %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta name="charset" content="utf-8">
+      <title>{% block page_title %}{{ config.APP_NAME }}{% endblock %}</title>
+      
+      <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+      <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+      
+      <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet" />
+
+      {% if vue %}
+      {# Only load vue on pages that have set vue = true #}
+      <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+      {% endif %}
+      
+      <script src="/static/js/jsutil.js"></script>
+      <!-- link href="https://unpkg.com/@primer/css@^16.0.0/dist/primer.css" rel="stylesheet" /-->
+      <link href="/static/styles/primer.css" rel="stylesheet" />
+      <link href="/static/styles/app.css" rel="stylesheet" />
+      {% if config.GOOGLE_ANALYTICS_ID %}
+      <!-- Google Analytics -->
+      <script type="text/javascript">
+        (function(i, s, o, g, r, a, m) {
+          i['GoogleAnalyticsObject'] = r;
+          i[r] = i[r] || function() {
+            (i[r].q = i[r].q || []).push(arguments)
+          }, i[r].l = 1 * new Date();
+          a = s.createElement(o),
+            m = s.getElementsByTagName(o)[0];
+          a.async = 1;
+          a.src = g;
+          m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+        ga('create', '{{ config.GOOGLE_ANALYTICS_ID }}', 'auto');
+        ga('send', 'pageview');
+      </script>
+      {% endif %}
+    </head>
+    <body>
+            {# Example dropdown menu setup. Uncomment lines to view
+        {% set dropdown =
+          [
+            ('account stuff',
+              [
+                ('account.login', 'login', 'sign in'),
+                ('account.logout', 'logout', 'sign out'),
+                ('2nd drop', [
+                  ('account.login', 'login 2', ''),
+                  ('3rd drop', [
+                    ('main.index', 'home 2', '')
+                  ])
+                ])
+              ]
+            ),
+            ('main.index', 'home 1', 'home')
+          ]
+        %}
+      #}
+
+        {% block nav %}
+          {# add dropdown variable here to the render_nav method to render dropdowns #}
+          {% if to_render_nav != None %}
+          {{ nav.render_nav(current_user) }}
+          {% endif %}
+        {% endblock %}
+
+        {% include 'partials/_flashes.html' %}
+        {# When extended, the content block contains all the html of the webpage #}
+
+      <v-app id="app">
+        {% block content %}
+        {% endblock %}
+
+        {# Implement CSRF protection for site #}
+        {% if csrf_token()|safe %}
+            <div style="visibility: hidden; display: none">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token()|safe }}">
+            </div>
+        {% endif %}
+      </v-app>
+
+
+      <script>
+       {% if vue -%}
+        new Vue({el: '#app', vuetify: new Vuetify({
+          theme: {
+          themes: {
+            light: {
+              //primary: '#6200ea', // #E53935
+              primary: '#4285F4', // Google Blue
+              //primary: '#405DE6', // Royal Blue Instagram
+              secondary: '#555555', // #FFCDD2
+              accent: '#3F51B5', // #3F51B5
+              action: '#0f8243',
+              red: '#E50914', // Netflix Red
+              grey: '#AAB8C2',
+              light_grey: '#E1E8ED',
+              extra_light_grey: '#F5F8FA',
+            },
+          },
+        },
+      })})
+       {% endif -%}
+    </script>
+    </body>
+</html>

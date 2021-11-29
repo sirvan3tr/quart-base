@@ -1,0 +1,137 @@
+{% macro dashboard_option(title, endpoint, description=None, icon=None) %}
+<v-list-item link href='{{ url_for(endpoint) }}'>
+  {% if icon is not none %}
+  <v-list-item-icon>
+    <v-icon>{{ icon }}</v-icon>
+  </v-list-item-icon>
+  {% endif %}
+
+  <v-list-item-content>
+    <v-list-item-title>{{ title }}</v-list-item-title>
+    {% if description is not none %}
+      <v-list-item-subtitle>{{ description }}</v-list-item-subtitle>
+    {% endif %}
+  </v-list-item-content>
+</v-list-item>
+{% endmacro %}
+<div>
+  <v-app-bar
+    color="blue accent-4"
+    dense
+    dark
+    app
+    fixed
+    clipped-left
+  >
+    <v-app-bar-nav-icon></v-app-bar-nav-icon>
+
+    <v-toolbar-title>Admin Dashboard</v-toolbar-title>
+    <v-spacer></v-spacer>
+    <v-btn icon>
+      <v-icon>mdi-heart</v-icon>
+    </v-btn>
+    <v-btn icon>
+      <v-icon>mdi-magnify</v-icon>
+    </v-btn>
+    <v-menu left bottom>
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+          icon
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-icon>mdi-dots-vertical</v-icon>
+        </v-btn>
+      </template>
+
+      <v-list>
+        <v-list-item
+          v-for="n in 5"
+          :key="n"
+          @click="() => {}"
+        >
+          <v-list-item-title>Option {{ n }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+  </v-app-bar>
+</div>
+
+<v-navigation-drawer clipped expand-on-hover app>
+  <v-list-item>
+    <v-list-item-content>
+      <v-list-item-title class="text-h6">
+        Admin dashboard
+      </v-list-item-title>
+      <v-list-item-subtitle>
+        View and manage the application through here.
+      </v-list-item-subtitle>
+    </v-list-item-content>
+  </v-list-item>
+<v-divider></v-divider>
+<v-list dense nav>
+
+  {{ dashboard_option('Admin Home', 'admin.index', description='', icon='mdi-home') }}
+  {{ dashboard_option('Registered Users', 'admin.registered_users',
+    description='View and manage user accounts', icon='mdi-account-details') }}
+  {{ dashboard_option('Add New User', 'admin.new_user',
+    description='Create a new user account', icon='mdi-account-plus') }}
+  {{ dashboard_option('Invite New User', 'admin.invite_user',
+    description='Invites a new user to create their own account', icon='mdi-account-multiple-plus') }}
+</v-list>
+</v-navigation-drawer>
+
+<v-navigation-drawer
+v-model="drawer"
+app
+width="300"
+clipped
+>
+<v-navigation-drawer
+  v-model="drawer"
+  absolute
+  color="grey lighten-3"
+  mini-variant
+  expand-on-hover
+>
+  <v-avatar
+    class="d-block text-center mx-auto mt-4"
+    color="grey darken-1"
+    size="36"
+  ></v-avatar>
+
+  <v-divider class="mx-3 my-5"></v-divider>
+
+  <v-avatar
+    v-for="n in 6"
+    :key="n"
+    class="d-block text-center mx-auto mb-9"
+    color="grey lighten-1"
+    size="28"
+  ></v-avatar>
+</v-navigation-drawer>
+
+<div class="ml-14">
+  <v-list-item>
+    <v-list-item-content>
+      <v-list-item-title class="text-h6">
+        Admin dashboard
+      </v-list-item-title>
+      <v-list-item-subtitle>
+        View and manage the application through here.
+      </v-list-item-subtitle>
+    </v-list-item-content>
+  </v-list-item>
+<v-divider></v-divider>
+<v-list dense nav>
+
+  {{ dashboard_option('Admin Home', 'admin.index', description='', icon='mdi-home') }}
+  {{ dashboard_option('Registered Users', 'admin.registered_users',
+    description='View and manage user accounts', icon='mdi-account-details') }}
+  {{ dashboard_option('Add New User', 'admin.new_user',
+    description='Create a new user account', icon='mdi-account-plus') }}
+  {{ dashboard_option('Invite New User', 'admin.invite_user',
+    description='Invites a new user to create their own account', icon='mdi-account-multiple-plus') }}
+</v-list>
+</div>
+</v-navigation-drawer>

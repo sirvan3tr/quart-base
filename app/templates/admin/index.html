@@ -1,0 +1,65 @@
+{% extends 'admin/_base.html' %}
+
+{% block admin %}
+
+<div class="container-lg d-flex justify-space-around mb-6">
+	
+	<v-card class="mx-auto" max-width="250" outlined>
+	<v-list-item three-line>
+		<v-list-item-content>
+		<div class="text-overline mb-4">
+			Users
+		</div>
+		<v-list-item-title class="text-h5 mb-1">
+			{{ user_count }}
+		</v-list-item-title>
+		<v-list-item-subtitle>Total number of registered users.</v-list-item-subtitle>
+		</v-list-item-content>
+	</v-list-item>
+	<v-card-actions>
+		<v-btn outlined rounded text>View all</v-btn>
+	</v-card-actions>
+	</v-card>
+
+
+
+	<v-card class="mx-auto" max-width="250" outlined>
+	<v-list-item three-line>
+		<v-list-item-content>
+		<div class="text-overline mb-4">
+			Adverts	
+		</div>
+		<v-list-item-title class="text-h5 mb-1">
+			{{ post_count }}
+		</v-list-item-title>
+		<v-list-item-subtitle>Total number of posts.</v-list-item-subtitle>
+		</v-list-item-content>
+	</v-list-item>
+
+	<v-card-actions>
+		<v-btn outlined rounded text>View all</v-btn>
+	</v-card-actions>
+	</v-card>
+
+
+
+	<v-card class="mx-auto" max-width="250" outlined>
+	<v-list-item three-line>
+		<v-list-item-content>
+		<div class="text-overline mb-4">
+			Connections
+		</div>
+		<v-list-item-title class="text-h5 mb-1">
+			{{ connection_count }}
+		</v-list-item-title>
+		<v-list-item-subtitle>Total number of connections.</v-list-item-subtitle>
+		</v-list-item-content>
+	</v-list-item>
+
+	<v-card-actions>
+		<v-btn outlined rounded text>View all</v-btn>
+	</v-card-actions>
+	</v-card>
+</div>
+
+{% endblock %}

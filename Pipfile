@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+quart = "*"
+flask-migrate = "*"
+python-dotenv = "*"
+flask-login = "*"
+flask-mail = "*"
+flask-wtf = "*"
+flask-marshmallow = "*"
+marshmallow-sqlalchemy = "*"
+email-validator = "*"
+pillow = "*"
+quart-cors = "*"
+python-jose = "*"
+wtforms-sqlalchemy = "*"
+faker = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
